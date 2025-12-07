@@ -20,7 +20,14 @@ python3 run_agent_workflow.py "Summarize what the validator should check"
 ```
 Add `--repo-url https://github.com/you/repo.git` if you want tool-enabled sessions inside the sandbox; the script will clone the repo, run designer→programmer→validator, print their outputs, and then clean up the sandbox container.
 
-### 4. Build/run the development container
+### 4. Run the live audio conversation (with optional sandbox)
+```
+cd server
+python3 run_audio_agent.py --repo-url https://github.com/you/repo.git
+```
+Omit `--repo-url` if you just want a conversational demo; include it to let the agent read/write your repo through the sandbox while you speak. Use `Ctrl+C` to stop the audio loop.
+
+### 5. Build/run the development container
 ```
 docker build -t curant-dev -f docker/Dockerfile .
 docker run -it --rm \
