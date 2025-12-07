@@ -1,6 +1,8 @@
 #Service file to create functions to help the sandbox env 
+import os
 import git 
 import pathlib
+from urllib.parse import urlparse, urlunparse
 
 
 #Creating function to read in a repo string -> check files
@@ -10,7 +12,14 @@ def read_repo(repo_object, repo_str:str, workdir):
     should check if there is a docker file for the the agent -> to be used 
     """
     #Creating the github repo as well cloning the git from the repo url  
-    repo_object = git.Repo.clone_from(repo_str, workdir) #cloning repo in temp dir 
+    try:
+        repo_object = git.Repo.clone_from(repo_str, workdir) #cloning repo in temp dir 
+    except git.GitCommandError as clone_error:
+        #If repo requires authentication attempting token injection for private repos
+        authed_url = _inject_token(repo_str)
+        if authed_url == repo_str:
+            raise
+        repo_object = git.Repo.clone_from(authed_url, workdir)
 
     #Getting the latest working commit from the tree 
     tree = repo_object.head.commit.tree #latest commit tree
@@ -62,3 +71,15 @@ def retrieve_dockerfile(tree, dockerfile='Dockerfile'):
             
     #If no docker file exists -> return None 
     return None #docker file doesnt exist in repo
+
+
+#Helper to inject github token from env for private repos
+def _inject_token(repo_url: str) -> str:
+    token = os.getenv("AGENT_GITHUB_TOKEN") or os.getenv("GITHUB_TOKEN")
+    if not token or not repo_url.startswith("https://"):
+        return repo_url
+    parsed = urlparse(repo_url)
+    if not parsed.netloc or parsed.username:
+        return repo_url
+    authed = parsed._replace(netloc=f"{token}@{parsed.netloc}")
+    return urlunparse(authed)
