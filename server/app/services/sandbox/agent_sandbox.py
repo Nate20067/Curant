@@ -9,9 +9,9 @@ from bs4 import BeautifulSoup
 from typing import Optional, Tuple, Union
 from urllib.parse import urlparse, quote
 from docker.errors import APIError
-from services.sandbox.sandbox_helper import read_repo
-from services.sandbox.sandbox_code_similarity import CodeReviewValidator
-from services.sandbox.rate_limiter import RateLimiter
+from app.services.sandbox.sandbox_helper import read_repo
+from app.services.sandbox.sandbox_code_similarity import CodeReviewValidator
+from app.services.sandbox.rate_limiter import RateLimiter
 import pathlib
 
 

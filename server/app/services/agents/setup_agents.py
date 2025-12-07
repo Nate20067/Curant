@@ -34,7 +34,7 @@ def designer_agent(prompt: str, sandbox, conversation_history: list = None):
         messages.append({'role': 'user', 'content': prompt})
 
     #Loading designer tools JSON
-    tools = load_tools("tools/designer_tools.json")
+    tools = load_tools(TOOLS_DIR / "designer_tool.json")
 
     #Designer tool execution loop -> allows designer to update design docs
     while True:
