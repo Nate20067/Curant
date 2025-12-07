@@ -121,30 +121,29 @@ def input_stream(mic_stream, terminal_event, processing_queue):
 def output_stream(speaker_stream, audio_chunks, terminal_state, processing_queue, response_queue):
     """
     Listens for audio processing signals and plays back model responses.
-    Now uses async agent processing to avoid blocking the audio loop.
+    Uses async agent processing to avoid blocking the audio loop.
     """
+    pending_jobs = 0
+    
     while not _should_terminate(terminal_state):
-        #wait for signal that audio is ready to process
+        #Check for new audio to process
         try:
-            processing_queue.get(timeout=0.5)
+            processing_queue.get(timeout=0.1)
+            _AGENT_EXECUTOR.submit(_async_agent_processing, response_queue)
+            pending_jobs += 1
         except queue.Empty:
-            #Check for pending responses even if no new audio
-            try:
-                response_audio_path = response_queue.get(block=False)
-                _play_audio_response(speaker_stream, response_audio_path, audio_chunks)
-            except queue.Empty:
-                pass
-            continue
-
-        #Submit agent workflow to background thread (non-blocking!)
-        _AGENT_EXECUTOR.submit(_async_agent_processing, response_queue)
+            pass
         
-        #Immediately check if there's a response ready to play
+        #Always check for ready responses (non-blocking)
         try:
-            response_audio_path = response_queue.get(timeout=0.1)
+            response_audio_path = response_queue.get(block=False)
             _play_audio_response(speaker_stream, response_audio_path, audio_chunks)
+            pending_jobs = max(0, pending_jobs - 1)
         except queue.Empty:
-            pass  #No response yet, continue listening
+            pass
+        
+        #Prevent tight loop
+        time.sleep(0.05)
 
 
 def _async_agent_processing(response_queue):
@@ -190,16 +189,29 @@ def _split_agent_sections(payload):
         return ("", "")
 
     text = ""
-    if isinstance(payload, (list, tuple)):
+    
+    #Handle OpenAI response objects
+    if hasattr(payload, 'choices'):
+        if payload.choices and hasattr(payload.choices[0], 'message'):
+            msg = payload.choices[0].message
+            text = msg.content if hasattr(msg, 'content') else ""
+        else:
+            return ("", "")
+    elif hasattr(payload, 'content'):
+        text = payload.content or ""
+    elif isinstance(payload, str):
+        text = payload
+    elif isinstance(payload, (list, tuple)):
         text = " ".join(str(item) for item in payload if item)
     else:
         text = str(payload or "")
 
-    if not text.strip():
+    text = text.strip()
+    if not text:
         return ("", "")
-
+    
     if "/" not in text:
-        return (text.strip(), "")
+        return (text, "")
 
     left, right = text.split("/", 1)
     return (left.strip(), right.strip())

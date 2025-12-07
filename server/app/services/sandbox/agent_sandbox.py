@@ -73,6 +73,37 @@ class Sandbox:
             logging.warning(f"Branch {branch_name} may exist, checking out: {e}")
             self.repo.heads[branch_name].checkout()
 
+    #Designer tool methods
+    def write_design_doc(self, file: str, content: str):
+        """Create design document (designer tool)"""
+        design_path = f"design_docs/{file}"
+        return self.create_file(design_path, content)
+
+    def update_design_doc(self, file: str, content: str):
+        """Update design document (designer tool)"""
+        design_path = f"design_docs/{file}"
+        return self.update_file(design_path, content, append=False)
+
+    def append_design_note(self, file: str, note: str):
+        """Append note to design doc (designer tool)"""
+        design_path = f"design_docs/{file}"
+        return self.update_file(design_path, f"\n{note}", append=True)
+
+    def save_task_breakdown(self, file: str, breakdown: str):
+        """Save task breakdown (designer tool)"""
+        design_path = f"design_docs/{file}"
+        return self.create_file(design_path, breakdown)
+
+    def read_design_doc(self, file: str):
+        """Read design document (designer tool)"""
+        design_path = f"design_docs/{file}"
+        return self.read_file(design_path)
+
+    def save_diagram(self, file: str, diagram: str):
+        """Save architecture diagram (designer tool)"""
+        design_path = f"design_docs/{file}"
+        return self.create_file(design_path, diagram)
+
     #Creating a method for the agent to create a file
     def create_file(self, relative_file: str, content: str):
         """Creates a new file with the given content"""
@@ -92,9 +123,10 @@ class Sandbox:
                 write.write(content) #Writing agents content to the file
             #Adding file to git staging
             self.repo.index.add([relative_file])
+            return {"success": True, "file": relative_file, "action": "created"}
         else:
             #If file exists calling update file method instead
-            self.update_file(relative_file, content)
+            return self.update_file(relative_file, content)
 
     #Update file method -> allows for agent to update a given file in the list 
     def update_file(self, relative_file: str, content: str, append: bool = False):
@@ -105,8 +137,7 @@ class Sandbox:
         #Ensuring that the file is actually in the directory
         if not target_file.exists():
             #If file is not in directory calling create file 
-            self.create_file(relative_file=relative_file, content=content)
-            return
+            return self.create_file(relative_file=relative_file, content=content)
         
         #Creating parent directories if they don't exist
         target_file.parent.mkdir(parents=True, exist_ok=True)
@@ -121,6 +152,9 @@ class Sandbox:
         
         #Adding updated file to git staging
         self.repo.index.add([relative_file])
+        
+        action = "appended" if append else "updated"
+        return {"success": True, "file": relative_file, "action": action}
 
     #Execute command method -> runs shell commands in the container
     def exec_file(self, command: Union[str, list], workdir: Optional[str] = None, environment: Optional[dict] = None) -> Tuple[int, str]:
@@ -195,6 +229,31 @@ class Sandbox:
             logging.error(f"Test execution error for {relative_file}: {e}")
         
         return test_results
+
+    #Validator tool methods
+    def check_code_similarity(self, relative_file: str, design_spec: str, threshold: float = 0.45) -> dict:
+        """Alias for check_code_review to match validator tool schema"""
+        review = self.check_code_review(relative_file, design_spec, include_tests=False)
+        # Return simplified result matching validator expectations
+        return {
+            'file': relative_file,
+            'similarity_score': review['score'],
+            'passes_threshold': review['score'] >= threshold,
+            'issues': review['issues'],
+            'approved': review['approved'],
+            'needs_revision': review['needs_revision']
+        }
+
+    def report_runtime_error(self, error_output: str, context: str = "") -> dict:
+        """Log runtime error for validator (validator tool)"""
+        logging.error(f"Runtime error reported: {context}")
+        logging.error(error_output)
+        return {
+            'error_logged': True,
+            'error_output': error_output,
+            'context': context,
+            'message': 'Error has been logged and is ready for programmer review'
+        }
 
     #Check code review method -> uses LLM to intelligently validate code against design spec
     def check_code_review(self, relative_file: str, design_spec: str, include_tests: bool = False) -> dict:

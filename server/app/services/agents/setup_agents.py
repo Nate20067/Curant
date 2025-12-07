@@ -23,10 +23,10 @@ def designer_agent(prompt: str, sandbox, conversation_history: list = None):
     #Building conversation history -> starts with system context from designer
     messages = conversation_history or []
     
-    #If no history exists -> adding initial designer context as assistant message
+    #If no history exists -> adding initial designer context as system message
     if not messages:
         messages = [
-            {'role': 'assistant', 'content': DESIGNER_PROMPT},  #Designer introduces itself
+            {'role': 'system', 'content': DESIGNER_PROMPT},  #Designer system prompt
             {'role': 'user', 'content': prompt}  #User provides their request
         ]
     else:
@@ -39,7 +39,7 @@ def designer_agent(prompt: str, sandbox, conversation_history: list = None):
     #Designer tool execution loop -> allows designer to update design docs
     while True:
         response = agent_client.chat.completions.create(
-            model="gpt-5.1",  #Using GPT-5.1 model for designer agent
+            model="gpt-4o",  #Using GPT-4o model for designer agent
             max_tokens=800,
             messages=messages,   #Passing full conversation history
             tools=tools,         #Passing designer tools
@@ -53,19 +53,26 @@ def designer_agent(prompt: str, sandbox, conversation_history: list = None):
             messages.append({'role': 'assistant', 'content': msg.content})
             return msg.content  #Returning design output to system
 
+        #Adding assistant message with tool calls
+        messages.append({
+            'role': 'assistant',
+            'content': msg.content,
+            'tool_calls': msg.tool_calls
+        })
+
         #Handling tool calls from designer agent
         for call in msg.tool_calls:
             func_name = call.function.name
             args = json.loads(call.function.arguments)
 
-            #Designer can only operate in design_docs/ folder, enforced here
-            if "file" in args:
-                file_path = f"design_docs/{args['file']}"
-                args["file"] = file_path
-
             #Mapping tool call to sandbox method
-            method = getattr(sandbox, func_name)
-            result = method(**args)
+            try:
+                method = getattr(sandbox, func_name)
+                result = method(**args)
+            except AttributeError:
+                result = {"error": f"Tool {func_name} not found in sandbox"}
+            except Exception as e:
+                result = {"error": str(e)}
 
             #Returning tool result back into conversation
             messages.append({
@@ -80,10 +87,10 @@ def programmer_agent(design_instructions: str, sandbox, conversation_history: li
     #Building conversation history -> starts with programmer context
     messages = conversation_history or []
     
-    #If no history exists -> adding initial programmer context as assistant message
+    #If no history exists -> adding initial programmer context as system message
     if not messages:
         messages = [
-            {'role': 'assistant', 'content': PROGRAMMING_AGENT},  #Programmer introduces itself
+            {'role': 'system', 'content': PROGRAMMING_AGENT},  #Programmer system prompt
             {'role': 'user', 'content': design_instructions}  #Designer provides instructions
         ]
     else:
@@ -96,7 +103,7 @@ def programmer_agent(design_instructions: str, sandbox, conversation_history: li
     #Loop -> allows agent to call tools multiple times
     while True:
         response = agent_client.chat.completions.create(
-            model="gpt-5.1-codex-max",  #Using GPT-4o model for programmer agent
+            model="gpt-4o",  #Using GPT-4o model for programmer agent
             max_tokens=2000,  #Higher token limit for code generation
             messages=messages,  #Passing full conversation history
             tools=tools,       #Passing programmer tools
@@ -110,14 +117,26 @@ def programmer_agent(design_instructions: str, sandbox, conversation_history: li
             messages.append({'role': 'assistant', 'content': msg.content})
             return msg.content  #Returning final result to application
 
+        #Adding assistant message with tool calls
+        messages.append({
+            'role': 'assistant',
+            'content': msg.content,
+            'tool_calls': msg.tool_calls
+        })
+
         #Handling tool calls from programmer agent
         for call in msg.tool_calls:
             func = call.function.name               #Tool function name
             args = json.loads(call.function.arguments)  #Tool arguments loaded from JSON
 
             #Calling Sandbox method that matches tool function name
-            method = getattr(sandbox, func)
-            result = method(**args)
+            try:
+                method = getattr(sandbox, func)
+                result = method(**args)
+            except AttributeError:
+                result = {"error": f"Tool {func} not found in sandbox"}
+            except Exception as e:
+                result = {"error": str(e)}
 
             #Adding tool result back into conversation for agent to continue
             messages.append({
@@ -137,10 +156,10 @@ def validator_agent(design: str, code: str, sandbox, conversation_history: list 
     #Creating validation prompt with design and code
     validation_prompt = f"Design Requirements:\n{design}\n\nGenerated Code:\n{code}\n\nPlease validate if the code meets the design requirements."
     
-    #If no history exists -> adding initial validator context as assistant message
+    #If no history exists -> adding initial validator context as system message
     if not messages:
         messages = [
-            {'role': 'assistant', 'content': VALIDATOR_PROMPT},  #Validator introduces itself
+            {'role': 'system', 'content': VALIDATOR_PROMPT},  #Validator system prompt
             {'role': 'user', 'content': validation_prompt}  #Providing design and code to validate
         ]
     else:
@@ -153,7 +172,7 @@ def validator_agent(design: str, code: str, sandbox, conversation_history: list 
     #Loop -> validator may call multiple tools during validation
     while True:
         response = agent_client.chat.completions.create(
-            model="gpt-5.1",  #Using GPT-4o model for validator agent
+            model="gpt-4o",  #Using GPT-4o model for validator agent
             max_tokens=1000,  #Medium token limit for validation feedback
             messages=messages,  #Passing full conversation history
             tools=tools,       #Passing validator tools
@@ -167,14 +186,26 @@ def validator_agent(design: str, code: str, sandbox, conversation_history: list 
             messages.append({'role': 'assistant', 'content': msg.content})
             return msg.content  #Returning validation report
 
+        #Adding assistant message with tool calls
+        messages.append({
+            'role': 'assistant',
+            'content': msg.content,
+            'tool_calls': msg.tool_calls
+        })
+
         #Handling validator tool calls
         for call in msg.tool_calls:
             func = call.function.name               #Tool function name
             args = json.loads(call.function.arguments)  #Tool arguments
 
             #Calling Sandbox method via Python reflection
-            method = getattr(sandbox, func)
-            result = method(**args)
+            try:
+                method = getattr(sandbox, func)
+                result = method(**args)
+            except AttributeError:
+                result = {"error": f"Tool {func} not found in sandbox"}
+            except Exception as e:
+                result = {"error": str(e)}
 
             #Returning tool result to validator agent
             messages.append({

@@ -3,7 +3,7 @@
     "type": "function",
     "function": {
       "name": "check_code_similarity",
-      "description": "Checks similarity between the programmer’s code and the design specification. If below threshold, validator triggers revisions.",
+      "description": "Checks similarity between the programmer's code and the design specification. If below threshold, validator triggers revisions.",
       "parameters": {
         "type": "object",
         "properties": {
@@ -40,7 +40,12 @@
       "parameters": {
         "type": "object",
         "properties": {
-          "command": { "type": ["string", "array"] },
+          "command": { 
+            "oneOf": [
+              { "type": "string" },
+              { "type": "array", "items": { "type": "string" } }
+            ]
+          },
           "workdir": { "type": ["string", "null"] },
           "environment": { "type": ["object", "null"] }
         },
@@ -58,7 +63,7 @@
         "type": "object",
         "properties": {
           "error_output": { "type": "string" },
-          "context": { "type": "string" }
+          "context": { "type": "string", "default": "" }
         },
         "required": ["error_output"]
       }

@@ -2,6 +2,7 @@
 """Launches the live audio conversation loop with optional sandbox support."""
 
 import argparse
+import logging
 
 from app.services.audio_system import audio_service
 
@@ -24,13 +25,25 @@ def main():
     parser.add_argument("--image", default="python:3.9", help="Docker image used for sandbox execution")
     args = parser.parse_args()
 
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    )
+    logging.info("Starting audio agent runner")
+
     sandbox = _configure_sandbox(args.repo_url, args.branch, args.image)
+    if sandbox:
+        logging.info("Sandbox ready at %s on branch %s", sandbox.workdir, args.branch)
 
     try:
+        logging.info("Launching parallel audio stream...")
         audio_service.parallel_audio_stream()
     finally:
         if sandbox:
+            logging.info("Cleaning up sandbox...")
             sandbox.cleanup(push_to_remote=False)
+
+    logging.info("Audio agent runner finished cleanly")
 
 
 if __name__ == "__main__":

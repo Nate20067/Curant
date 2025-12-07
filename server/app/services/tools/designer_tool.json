@@ -1,18 +1,28 @@
-{
-  "tools": [
-    {
+[
+  {
+    "type": "function",
+    "function": {
       "name": "write_design_doc",
       "description": "Create a new design document containing high-level system design, specifications, or plans.",
       "parameters": {
         "type": "object",
         "properties": {
-          "file": { "type": "string", "description": "Relative path of the design document to create." },
-          "content": { "type": "string", "description": "Full content of the document." }
+          "file": { 
+            "type": "string", 
+            "description": "Relative path of the design document to create." 
+          },
+          "content": { 
+            "type": "string", 
+            "description": "Full content of the document." 
+          }
         },
         "required": ["file", "content"]
       }
-    },
-    {
+    }
+  },
+  {
+    "type": "function",
+    "function": {
       "name": "update_design_doc",
       "description": "Overwrite an existing design document with updated content.",
       "parameters": {
@@ -23,8 +33,11 @@
         },
         "required": ["file", "content"]
       }
-    },
-    {
+    }
+  },
+  {
+    "type": "function",
+    "function": {
       "name": "append_design_note",
       "description": "Append a new design or progress note into a document. Used to show what the designer is currently working on.",
       "parameters": {
@@ -35,8 +48,11 @@
         },
         "required": ["file", "note"]
       }
-    },
-    {
+    }
+  },
+  {
+    "type": "function",
+    "function": {
       "name": "save_task_breakdown",
       "description": "Save a structured task breakdown for the current project stage.",
       "parameters": {
@@ -47,8 +63,11 @@
         },
         "required": ["file", "breakdown"]
       }
-    },
-    {
+    }
+  },
+  {
+    "type": "function",
+    "function": {
       "name": "read_design_doc",
       "description": "Read and return the content of an existing design document.",
       "parameters": {
@@ -58,8 +77,11 @@
         },
         "required": ["file"]
       }
-    },
-    {
+    }
+  },
+  {
+    "type": "function",
+    "function": {
       "name": "save_diagram",
       "description": "Save an ASCII or text-based architecture diagram.",
       "parameters": {
@@ -71,5 +93,5 @@
         "required": ["file", "diagram"]
       }
     }
-  ]
-}
+  }
+]
