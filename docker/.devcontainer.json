@@ -1,0 +1,20 @@
+{
+  "name": "Curant Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "remoteUser": "root",
+  "workspaceFolder": "/workspace",
+  "postCreateCommand": "pip list",
+  "containerEnv": {
+    "PYTHONUNBUFFERED": "1"
+  },
+  "runArgs": [
+    "--env-file",
+    "server/.env"
+  ],
+  "mounts": [
+    "source=${localWorkspaceFolder}/server,target=/workspace/server,type=bind,consistency=cached"
+  ]
+}

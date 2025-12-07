@@ -1,0 +1,145 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "check_code_similarity",
+      "description": "Checks similarity between the programmer’s code and the design specification. If below threshold, validator triggers revisions.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "relative_file": { "type": "string" },
+          "design_spec": { "type": "string" },
+          "threshold": { "type": "number", "default": 0.45 }
+        },
+        "required": ["relative_file", "design_spec"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "test_file",
+      "description": "Runs test commands inside the sandbox to validate correctness and stable runtime behavior.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "relative_file": { "type": "string" },
+          "test_command": { "type": "string" }
+        },
+        "required": ["relative_file", "test_command"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "exec_file",
+      "description": "Executes arbitrary shell commands in the Docker sandbox. Used for runtime diagnostics, build failures, and direct error capture.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "command": { "type": ["string", "array"] },
+          "workdir": { "type": ["string", "null"] },
+          "environment": { "type": ["object", "null"] }
+        },
+        "required": ["command"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "report_runtime_error",
+      "description": "Sends runtime terminal output back to the programmer with detailed suggestions for how to fix the bug.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "error_output": { "type": "string" },
+          "context": { "type": "string" }
+        },
+        "required": ["error_output"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "stage_files",
+      "description": "Stages selected files to git before commit. Validator uses this when programmer code passes validation and is ready to commit.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_list": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["file_list"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "commit_changes",
+      "description": "Commits staged changes after all tests and similarity checks pass.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" }
+        },
+        "required": ["message"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "push_to_remote",
+      "description": "Pushes the committed code to the remote branch when validator fully approves the work.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "remote_name": { "type": "string", "default": "origin" }
+        }
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "search_web",
+      "description": "Validator uses web search to investigate error messages or missing documentation before giving instructions to the programmer.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" },
+          "max_results": { "type": "integer", "default": 5 }
+        },
+        "required": ["query"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "fetch_web_page",
+      "description": "Fetches documentation or reference pages to provide deeper debugging insight to the programmer.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string" }
+        },
+        "required": ["url"]
+      }
+    }
+  }
+]

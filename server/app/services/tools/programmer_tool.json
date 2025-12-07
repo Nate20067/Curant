@@ -1,0 +1,111 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "read_file",
+      "description": "Reads a file from the sandbox so the programmer can examine or review code before editing.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "relative_file": { "type": "string" }
+        },
+        "required": ["relative_file"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "update_file",
+      "description": "Rewrites an existing file with new content. Used for applying bug fixes from validator feedback.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "relative_file": { "type": "string" },
+          "content": { "type": "string" },
+          "append": { "type": "boolean", "default": false }
+        },
+        "required": ["relative_file", "content"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "create_file",
+      "description": "Creates a new file in the sandbox with specified content.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "relative_file": { "type": "string" },
+          "content": { "type": "string" }
+        },
+        "required": ["relative_file", "content"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "delete_file",
+      "description": "Deletes a file from the sandbox if no longer needed.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "relative_file": { "type": "string" }
+        },
+        "required": ["relative_file"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "move_file",
+      "description": "Moves or renames a file inside the sandbox workspace.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "source_file": { "type": "string" },
+          "destination_file": { "type": "string" }
+        },
+        "required": ["source_file", "destination_file"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "search_web",
+      "description": "Searches the web (DuckDuckGo HTML) for troubleshooting information, errors, or documentation. Programmer uses this before writing code or fixing bugs.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": { "type": "string" },
+          "max_results": { "type": "integer", "default": 5 }
+        },
+        "required": ["query"]
+      }
+    }
+  },
+
+  {
+    "type": "function",
+    "function": {
+      "name": "fetch_web_page",
+      "description": "Fetches full content from a URL to read documentation, API guides, error references, or tutorials.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string" }
+        },
+        "required": ["url"]
+      }
+    }
+  }
+]

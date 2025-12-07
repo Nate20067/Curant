@@ -1,0 +1,75 @@
+{
+  "tools": [
+    {
+      "name": "write_design_doc",
+      "description": "Create a new design document containing high-level system design, specifications, or plans.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string", "description": "Relative path of the design document to create." },
+          "content": { "type": "string", "description": "Full content of the document." }
+        },
+        "required": ["file", "content"]
+      }
+    },
+    {
+      "name": "update_design_doc",
+      "description": "Overwrite an existing design document with updated content.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string" },
+          "content": { "type": "string" }
+        },
+        "required": ["file", "content"]
+      }
+    },
+    {
+      "name": "append_design_note",
+      "description": "Append a new design or progress note into a document. Used to show what the designer is currently working on.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string" },
+          "note": { "type": "string" }
+        },
+        "required": ["file", "note"]
+      }
+    },
+    {
+      "name": "save_task_breakdown",
+      "description": "Save a structured task breakdown for the current project stage.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string" },
+          "breakdown": { "type": "string" }
+        },
+        "required": ["file", "breakdown"]
+      }
+    },
+    {
+      "name": "read_design_doc",
+      "description": "Read and return the content of an existing design document.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string" }
+        },
+        "required": ["file"]
+      }
+    },
+    {
+      "name": "save_diagram",
+      "description": "Save an ASCII or text-based architecture diagram.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file": { "type": "string" },
+          "diagram": { "type": "string" }
+        },
+        "required": ["file", "diagram"]
+      }
+    }
+  ]
+}
