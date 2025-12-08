@@ -1,3 +1,3 @@
 #Files that are ignored when pushing to github
-/Users/apple/Curant/server/.venv
-/Users/apple/Curant/server/.env
+server/.venv/
+server/.env
