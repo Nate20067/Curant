@@ -44,8 +44,14 @@ class ValidatorAgentRunner:
         repo_url: str,
         branch_name: str = "agent-changes",
         image: str = "python:3.9",
+        repo_branch: str | None = None,
     ) -> "ValidatorAgentRunner":
-        sandbox = Sandbox(repo_url_str=repo_url, branch_name=branch_name, image=image)
+        sandbox = Sandbox(
+            repo_url_str=repo_url,
+            branch_name=branch_name,
+            image=image,
+            repo_branch=repo_branch
+        )
         return cls(sandbox)
 
     def __enter__(self) -> "ValidatorAgentRunner":

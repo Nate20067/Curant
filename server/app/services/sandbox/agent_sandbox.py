@@ -6,9 +6,10 @@ import docker
 import httpx
 import requests
 from bs4 import BeautifulSoup
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, List, Dict
 from urllib.parse import urlparse, quote
 from docker.errors import APIError
+from datetime import datetime
 from app.services.sandbox.sandbox_helper import read_repo
 from app.services.sandbox.sandbox_code_similarity import CodeReviewValidator
 from app.services.sandbox.rate_limiter import RateLimiter
@@ -18,7 +19,13 @@ import pathlib
 class Sandbox:
     """Sandbox environment for running containerized development operations"""
     
-    def __init__(self, repo_url_str: str, branch_name: str = "agent-changes", image: str = "python:3.9"):
+    def __init__(
+        self,
+        repo_url_str: str,
+        branch_name: str = "agent-changes",
+        image: str = "python:3.9",
+        repo_branch: str | None = None
+    ):
         """Initialize sandbox with docker client and temp directories"""
         self.client = docker.from_env() 
         #Creating temp directory to store the users repo
@@ -31,6 +38,8 @@ class Sandbox:
         self.container = None
         self.container_workdir = "/workspace" #Directory mounted inside container
         self.branch_name = branch_name #Branch name for agent changes
+        self.repo_branch = repo_branch
+        self.agent_updates: List[Dict[str, str]] = []
         
         #Initializing code review validator for intelligent validation
         self.code_validator = CodeReviewValidator()
@@ -39,7 +48,12 @@ class Sandbox:
         self.web_rate_limiter = RateLimiter(max_calls=5, time_window=60.0)
 
         #Retrieving the docker file and the repo object
-        docker_path, self.repo = read_repo(repo_object=self.repo, repo_str=repo_url_str, workdir=self.workdir)
+        docker_path, self.repo = read_repo(
+            repo_object=self.repo,
+            repo_str=repo_url_str,
+            workdir=self.workdir,
+            checkout_branch=self.repo_branch
+        )
         
         #Creating new branch for agent changes
         self._create_branch(branch_name)
@@ -103,6 +117,45 @@ class Sandbox:
         """Save architecture diagram (designer tool)"""
         design_path = f"design_docs/{file}"
         return self.create_file(design_path, diagram)
+
+    #Agent communication methods
+    def write_agent_update(self, role: str, message: str, audience: Optional[str] = None) -> dict:
+        """Store shared agent notes so designer/programmer/validator stay in sync."""
+        role_name = (role or "agent").strip().lower()
+        entry = {
+            "role": role_name,
+            "message": (message or "").strip(),
+            "audience": (audience or "all").strip().lower(),
+            "timestamp": datetime.utcnow().isoformat() + "Z"
+        }
+        if not entry["message"]:
+            raise ValueError("agent update message cannot be empty")
+
+        self.agent_updates.append(entry)
+        logging.debug("Agent update recorded: %s", entry)
+        return {
+            "success": True,
+            "entry": entry,
+            "total_updates": len(self.agent_updates)
+        }
+
+    def read_agent_updates(self, limit: int = 5, include_roles: Optional[list] = None, audience: Optional[str] = None) -> dict:
+        """Retrieve recent shared agent notes."""
+        notes = self.agent_updates
+        if include_roles:
+            allowed = {role.strip().lower() for role in include_roles if role}
+            notes = [entry for entry in notes if entry["role"] in allowed]
+        audience_filter = (audience or "").strip().lower()
+        if audience_filter:
+            notes = [entry for entry in notes if entry["audience"] in (audience_filter, "all")]
+
+        if limit and limit > 0:
+            notes = notes[-limit:]
+
+        return {
+            "success": True,
+            "updates": notes
+        }
 
     #Creating a method for the agent to create a file
     def create_file(self, relative_file: str, content: str):

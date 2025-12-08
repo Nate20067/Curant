@@ -107,5 +107,83 @@
         "required": ["url"]
       }
     }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "stage_files",
+      "description": "Stage selected files in git so they can be committed once implementation is ready.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "file_list": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        },
+        "required": ["file_list"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "commit_changes",
+      "description": "Commit staged changes with a descriptive message.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" }
+        },
+        "required": ["message"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "push_to_remote",
+      "description": "Push committed changes to the remote branch when ready for review.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "remote_name": { "type": "string", "default": "origin" }
+        }
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "write_agent_update",
+      "description": "Share a programming status update or question with the designer and validator.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "role": { "type": "string", "description": "Agent role submitting the update (e.g., programmer)." },
+          "message": { "type": "string", "description": "Summary of implementation progress or required clarifications." },
+          "audience": { "type": "string", "description": "Optional intended audience (designer, validator, all)." }
+        },
+        "required": ["role", "message"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "read_agent_updates",
+      "description": "Read the latest shared notes from designer or validator agents.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "limit": { "type": "integer", "default": 5 },
+          "include_roles": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "audience": { "type": "string", "description": "Filter updates intended for programmer or all." }
+        }
+      }
+    }
   }
 ]

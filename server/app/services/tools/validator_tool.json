@@ -146,5 +146,39 @@
         "required": ["url"]
       }
     }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "write_agent_update",
+      "description": "Send a concise validation summary or blocker back to the designer/programmer agents.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "role": { "type": "string", "description": "Agent role submitting the update (e.g., validator)." },
+          "message": { "type": "string", "description": "Details about findings, test status, or approvals." },
+          "audience": { "type": "string", "description": "Optional audience such as designer, programmer, or all." }
+        },
+        "required": ["role", "message"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "read_agent_updates",
+      "description": "Read the most recent status updates from other agents.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "limit": { "type": "integer", "default": 5 },
+          "include_roles": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "audience": { "type": "string", "description": "Filter updates intended for validator or all." }
+        }
+      }
+    }
   }
 ]

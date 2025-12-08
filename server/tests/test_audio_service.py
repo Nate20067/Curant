@@ -7,34 +7,42 @@ import unittest
 import types
 import queue
 from pathlib import Path
+import numpy as np
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.append(str(PROJECT_ROOT))
 
 os.environ.setdefault("OPENAI_API_KEY", "test-key")
+os.environ.setdefault("ELEVENLABS_API_KEY", "test-eleven")
 
 #mocking external deps needed by audio_service
-fake_pyaudio = types.ModuleType("pyaudio")
+fake_sounddevice = types.ModuleType("sounddevice")
 
 
-class _FakePyAudioInstance:
-    def open(self, *_, **__):
-        raise RuntimeError("PyAudio hardware not mocked in tests")
+class _FakeStream:
+    def __init__(self, *_, **__):
+        pass
 
-    def stop_stream(self):
+    def start(self):
+        pass
+
+    def stop(self):
         pass
 
     def close(self):
         pass
 
-    def get_sample_size(self, _):
-        return 2
+    def read(self, frames):
+        raise RuntimeError("Sounddevice hardware not mocked in tests")
+
+    def write(self, _data):
+        pass
 
 
-fake_pyaudio.PyAudio = lambda: _FakePyAudioInstance()
-fake_pyaudio.paInt16 = 2
-sys.modules.setdefault("pyaudio", fake_pyaudio)
+fake_sounddevice.InputStream = _FakeStream
+fake_sounddevice.OutputStream = _FakeStream
+sys.modules.setdefault("sounddevice", fake_sounddevice)
 
 fake_vad = types.ModuleType("vad")
 
@@ -111,6 +119,28 @@ class _FakeOpenAIClient:
 fake_openai.OpenAI = _FakeOpenAIClient
 sys.modules.setdefault("openai", fake_openai)
 
+fake_eleven_module = types.ModuleType("elevenlabs")
+fake_eleven_client_module = types.ModuleType("elevenlabs.client")
+
+
+class _FakeElevenLabs:
+    def __init__(self, *_, **__):
+        self.speech_to_text = types.SimpleNamespace(convert=self._convert_text)
+        self.text_to_speech = types.SimpleNamespace(convert=self._convert_dialogue)
+
+    @staticmethod
+    def _convert_text(*_, **__):
+        return types.SimpleNamespace(text="test transcript")
+
+    @staticmethod
+    def _convert_dialogue(*_, **__):
+        return b"\x00\x00" * 10
+
+
+fake_eleven_client_module.ElevenLabs = _FakeElevenLabs
+sys.modules.setdefault("elevenlabs", fake_eleven_module)
+sys.modules.setdefault("elevenlabs.client", fake_eleven_client_module)
+
 fake_agents_pkg = types.ModuleType("agents")
 fake_setup_agents = types.ModuleType("agents.setup_agents")
 
@@ -157,8 +187,9 @@ class DummyMicrophone:
     def read(self, *_, **__):
         if self._frames:
             self._last = self._frames.pop(0)
-            return self._last
-        return self._last
+        frame_bytes = self._last
+        frame_array = np.frombuffer(frame_bytes, dtype=np.int16).reshape(-1, 1)
+        return frame_array, False
 
 
 class InputStreamTests(unittest.TestCase):

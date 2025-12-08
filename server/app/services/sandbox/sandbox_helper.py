@@ -6,20 +6,24 @@ from urllib.parse import urlparse, urlunparse
 
 
 #Creating function to read in a repo string -> check files
-def read_repo(repo_object, repo_str:str, workdir):
+def read_repo(repo_object, repo_str:str, workdir, checkout_branch: str | None = None):
     """
     Function reads reads in a repo string checks files through repo 
     should check if there is a docker file for the the agent -> to be used 
     """
     #Creating the github repo as well cloning the git from the repo url  
+    clone_kwargs = {}
+    if checkout_branch:
+        clone_kwargs["branch"] = checkout_branch
+
     try:
-        repo_object = git.Repo.clone_from(repo_str, workdir) #cloning repo in temp dir 
+        repo_object = git.Repo.clone_from(repo_str, workdir, **clone_kwargs) #cloning repo in temp dir 
     except git.GitCommandError as clone_error:
         #If repo requires authentication attempting token injection for private repos
         authed_url = _inject_token(repo_str)
         if authed_url == repo_str:
             raise
-        repo_object = git.Repo.clone_from(authed_url, workdir)
+        repo_object = git.Repo.clone_from(authed_url, workdir, **clone_kwargs)
 
     #Getting the latest working commit from the tree 
     tree = repo_object.head.commit.tree #latest commit tree

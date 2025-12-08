@@ -93,5 +93,39 @@
         "required": ["file", "diagram"]
       }
     }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "write_agent_update",
+      "description": "Share a short progress or requirements update with the programmer and validator agents.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "role": { "type": "string", "description": "Agent role submitting the update (e.g., designer)." },
+          "message": { "type": "string", "description": "Summary of decisions, blockers, or clarifications to broadcast." },
+          "audience": { "type": "string", "description": "Optional audience filter such as programmer, validator, or all." }
+        },
+        "required": ["role", "message"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "read_agent_updates",
+      "description": "Read the most recent shared updates from other agents.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "limit": { "type": "integer", "default": 5 },
+          "include_roles": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "audience": { "type": "string", "description": "Filter updates intended for a specific audience or 'all'." }
+        }
+      }
+    }
   }
 ]

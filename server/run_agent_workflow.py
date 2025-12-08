@@ -14,6 +14,7 @@ Usage examples:
     python3 run_agent_workflow.py \
         "Add a save button to the toolbar" \
         --repo-url https://github.com/myuser/myrepo.git \
+        --repo-branch main \
         --branch feature/save-button
     
     # Use custom Docker image and save to file
@@ -89,7 +90,7 @@ def validate_repo_url(url: str) -> None:
 
 
 #Function to initialize sandbox with docker and git -> returns None if no repo URL provided
-def _configure_sandbox(repo_url: Optional[str], branch: str, image: str):
+def _configure_sandbox(repo_url: Optional[str], branch: str, image: str, repo_branch: Optional[str]):
     """Initializes sandbox when repo_url is provided"""
     #If no repo URL provided -> running without sandbox environment
     if not repo_url:
@@ -106,13 +107,20 @@ def _configure_sandbox(repo_url: Optional[str], branch: str, image: str):
         from app.services.sandbox.agent_sandbox import Sandbox
         
         #Creating sandbox instance -> clones repo and starts docker container
-        sandbox = Sandbox(repo_url_str=repo_url, branch_name=branch, image=image)
+        sandbox = Sandbox(
+            repo_url_str=repo_url,
+            branch_name=branch,
+            image=image,
+            repo_branch=repo_branch
+        )
         #Registering sandbox with audio service so agents can use file operations
         audio_service.configure_agent_sandbox(sandbox)
         
         #Printing sandbox configuration for user visibility
         print(f"[SUCCESS] Sandbox ready")
         print(f"   Branch: {branch}")
+        if repo_branch:
+            print(f"   Repo checkout ref: {repo_branch}")
         print(f"   Image: {image}")
         print(f"   Workdir: {sandbox.workdir}")
         
@@ -168,6 +176,10 @@ def main(argv=None):
     parser.add_argument(
         "--repo-url",
         help="Git repository URL to clone inside the sandbox"
+    )
+    parser.add_argument(
+        "--repo-branch",
+        help="Branch/tag/commit to checkout before creating the sandbox branch"
     )
     parser.add_argument(
         "--branch",
@@ -245,7 +257,7 @@ def main(argv=None):
     
     try:
         #Creating sandbox if repo URL provided
-        sandbox = _configure_sandbox(args.repo_url, args.branch, args.image)
+        sandbox = _configure_sandbox(args.repo_url, args.branch, args.image, args.repo_branch)
         
         #Printing workflow start message with truncated prompt
         print(f"\n[START] Running workflow with prompt: {args.prompt[:60]}...")
