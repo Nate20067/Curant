@@ -1,3 +1,4 @@
 #Files that are ignored when pushing to github
-server/.venv/
-server/.env
+/Users/apple/Curant/server/app/services/audio_system/__pycache__
+/Users/apple/Curant/server/.env
+/Users/apple/Curant/server/.venv
